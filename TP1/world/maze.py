@@ -52,6 +52,8 @@ class Maze(gym.Env):
         self.na = 4       
         # Can be 'tabular' or 'nn' 
         self.mode = mode
+
+        self.states = [(y,x) for y in range(self.ny) for x in range(self.nx)]
         
         _ = self.reset()
 
@@ -136,7 +138,45 @@ class Maze(gym.Env):
                     if val is "S":
                         maze_.init_state = (y, x)
         return maze_
-                
+
+    def getStates(self) -> 'List[Tuple[int,int]]':
+        return self.states
+
+    def getDynamics(self, state, action, next_state):
+        action_name = self.actions[action]
+        proba = 0.
+        if (state == self.terminal_state):
+            return (next_state == self.terminal_state)
+               
+        if action_name == 'up':    # up
+            if (self.maze[state[0]-1, state[1]] == 0) and (next_state == (state[0]-1, state[1])):  # can go up
+                proba = 1
+            elif (self.maze[state[0]-1, state[1]] == 1) and (next_state == state):  # cant go up
+                proba = 1
+        elif action_name == 'down':  # down
+            if (self.maze[state[0]+1, state[1]] == 0) and (next_state == (state[0]+1, state[1])):  # can go down
+                proba = 1
+            elif (self.maze[state[0]+1, state[1]] == 1) and (next_state == state):  # cant go down
+                proba = 1
+        elif action_name == 'left':  # left
+            if (self.maze[state[0], state[1]-1] == 0) and (next_state == (state[0], state[1]-1)):  # can go left
+                proba = 1
+            elif (self.maze[state[0], state[1]-1] == 1) and (next_state == state):  # cant go left
+                proba = 1
+        else:              # right
+            if (self.maze[state[0], state[1]+1] == 0) and (next_state == (state[0], state[1]+1)):  # can go right
+                proba = 1
+            elif (self.maze[state[0], state[1]+1] == 1) and (next_state == state):  # cant go right
+                proba = 1
+
+        return proba
+
+    def getReward(self, state, action):
+        if (state == self.terminal_state):
+            return 0
+        else:
+            return -1
+
     def step(self, action):      # take action and returns next state, reward, terminal
         if self.terminal:
             print(
@@ -224,40 +264,6 @@ class Maze(gym.Env):
     def render_robot(self, img):
         # img_cv2 = cv2.resize(cv2.imread(Maze.URL_ROBOT, cv2.IMREAD_UNCHANGED),
         #                      (self.pixel_per_case, self.pixel_per_case))[:, :, :3]
-        img[self.loc[0]*self.pixel_per_case: (self.loc[0]+1)*self.pixel_per_case, self.loc[1] * self.pixel_per_case:(
-            self.loc[1]+1)*self.pixel_per_case, :3] = self.robot_color #cv2.cvtColor(img_cv2, cv2.COLOR_BGR2RGB)
-
-    def T(self, state, action, next_state):
-        action_name = self.actions[action]
-        proba = 0.
-        if (state == self.terminal_state):
-            return (next_state == self.terminal_state)
-               
-        if action_name == 'up':    # up
-            if (self.maze[state[0]-1, state[1]] == 0) and (next_state == (state[0]-1, state[1])):  # can go up
-                proba = 1
-            elif (self.maze[state[0]-1, state[1]] == 1) and (next_state == state):  # cant go up
-                proba = 1
-        elif action_name == 'down':  # down
-            if (self.maze[state[0]+1, state[1]] == 0) and (next_state == (state[0]+1, state[1])):  # can go down
-                proba = 1
-            elif (self.maze[state[0]+1, state[1]] == 1) and (next_state == state):  # cant go down
-                proba = 1
-        elif action_name == 'left':  # left
-            if (self.maze[state[0], state[1]-1] == 0) and (next_state == (state[0], state[1]-1)):  # can go left
-                proba = 1
-            elif (self.maze[state[0], state[1]-1] == 1) and (next_state == state):  # cant go left
-                proba = 1
-        else:              # right
-            if (self.maze[state[0], state[1]+1] == 0) and (next_state == (state[0], state[1]+1)):  # can go right
-                proba = 1
-            elif (self.maze[state[0], state[1]+1] == 1) and (next_state == state):  # cant go right
-                proba = 1
-
-        return proba
-
-    def R(self, state, action):
-        if (state == self.terminal_state):
-            return 0
-        else:
-            return -1
+        padding = int(self.pixel_per_case * 0.3)
+        img[self.loc[0]*self.pixel_per_case + padding : (self.loc[0]+1)*self.pixel_per_case - padding, self.loc[1] * self.pixel_per_case + padding:(
+            self.loc[1]+1)*self.pixel_per_case - padding, :3] = self.robot_color #cv2.cvtColor(img_cv2, cv2.COLOR_BGR2RGB)
