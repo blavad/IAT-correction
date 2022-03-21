@@ -1,11 +1,9 @@
 import numpy as np
 from copy import deepcopy
-
-from agent import AgentInterface
-from world.deterministic_maze import DeterministicMazeModel
-
 import pandas as pd
 
+from agent import AgentInterface
+from world.maze import Maze
 
 class VIAgent(AgentInterface):
     """ 
@@ -13,7 +11,7 @@ class VIAgent(AgentInterface):
     sur les valeurs (VI = Value Iteration).
     """
 
-    def __init__(self, maze: DeterministicMazeModel, gamma: float):
+    def __init__(self, maze: Maze, gamma: float):
         """"À LIRE
         Ce constructeur initialise une nouvelle instance de la classe ValueIteration.
         Il stocke les différents paramètres nécessaires au fonctionnement de l'algorithme et initialise à 0 la 
@@ -38,8 +36,8 @@ class VIAgent(AgentInterface):
         self.maze = maze 
         self.V = np.zeros([maze.ny, maze.nx]) 
 
-        self.mazeValues = pd.DataFrame(
-            data={'nx': maze.nx, 'ny': [maze.ny]})
+        # Visualisation des données (vous n'avez pas besoin de comprendre cette partie)
+        self.mazeValues = pd.DataFrame(data={'nx': maze.nx, 'ny': [maze.ny]})
 
     def solve(self, error: float):
         """
@@ -51,10 +49,9 @@ class VIAgent(AgentInterface):
         while ((n_iteration == 0) or not self.done(self.V, V_copy, error)):
             n_iteration += 1
             self.V = deepcopy(V_copy)
-            for y in range(self.maze.ny):
-                for x in range(self.maze.nx):
-                    if (not self.maze.maze[y, x]):
-                        V_copy[y, x] = self.bellman_operator((y, x))
+            for state in self.maze.getStates():
+                if (not self.maze.maze[state]):
+                    V_copy[state] = self.bellman_operator(state)
             
             # Sauvegarde les valeurs intermédiaires
             self.mazeValues = self.mazeValues.append({'episode': n_iteration, 'value': np.reshape(self.V, (1, self.maze.ny*self.maze.nx))[0]}, ignore_index=True)
@@ -67,29 +64,25 @@ class VIAgent(AgentInterface):
         """
         return (abs(V - V_copy).max() < error)
 
-    def bellman_operator(self, s: 'Pair[int, int]') -> float:
+    def bellman_operator(self, state: 'Tuple[int, int]') -> float:
         """À COMPLÉTER!
         Cette méthode calcul l'opérateur de mise à jour de bellman pour un état s. 
 
-        :param s: Un état quelconque
+        :param state: Un état quelconque
         :return: La valeur de mise à jour de la fonction de valeur
-
-        doit retourner une exception si l'état n'est pas valide
         """
-        if (self.maze.maze[s[0], s[1]]):
-            raise Exception('this state is a wall, should not be considered')
+        # Retourne une exception si l'état n'est pas valide
         max_value = -np.infty
         for a in range(self.maze.na):
             q_s_a = 0.
-            for next_y in range(self.maze.ny):
-                for next_x in range(self.maze.nx):
-                    # Compléter ici votre équation de Bellman
-                    q_s_a += self.maze.T((s[0], s[1]), a, (next_y, next_x)) * (self.maze.R(s, a) + self.gamma * self.V[next_y, next_x])
+            for next_state in self.maze.getStates():
+                # Compléter ici votre équation de Bellman
+                q_s_a += self.maze.getDynamics(state, a, next_state) * (self.maze.getReward(state, a) + self.gamma * self.V[next_state])
             if (q_s_a > max_value):
                 max_value = q_s_a
         return max_value
 
-    def select_action(self, s):
+    def select_action(self, state : 'Tuple[int, int]') -> int:
         """À COMPLÉTER!
         Cette méthode retourne l'action optimale.
 
@@ -98,16 +91,13 @@ class VIAgent(AgentInterface):
 
         doit retourner une exception si l'état n'est pas valide
         """
-        if (self.maze.maze[s[0], s[1]]):
-            raise Exception('this state is a wall, should not be considered')
         max_value = -np.infty
         amax = 0
         for a in range(self.maze.na):
             q_s_a = 0.
-            for next_y in range(self.maze.ny):
-                for next_x in range(self.maze.nx):
-                    # Compléter ici votre équation de Bellman
-                    q_s_a += self.maze.T((s[0], s[1]), a, (next_y, next_x)) * (self.maze.R(s, a) + self.gamma * self.V[next_y, next_x])
+            for next_state in self.maze.getStates():
+                # Compléter ici votre équation de Bellman
+                q_s_a += self.maze.getDynamics(state, a, next_state) * (self.maze.getReward(state, a) + self.gamma * self.V[next_state])
             if (q_s_a > max_value):
                 max_value = q_s_a
                 amax = a
