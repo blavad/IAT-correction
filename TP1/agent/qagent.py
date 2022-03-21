@@ -119,7 +119,7 @@ class QAgent(AgentInterface):
         :param reward: La récompense perçue
         :param next_state: L'état suivant
         """
-        raise NotImplementedError("Q-learning NotImplementedError at Function updateQ.")
+        self.Q[state[0], state[1], action] = (1. - self.alpha) * self.Q[state[0], state[1], action] + self.alpha * (reward + self.gamma * np.max(self.Q[next_state]))
 
     def select_action(self, state):
         """À COMPLÉTER!
@@ -128,7 +128,12 @@ class QAgent(AgentInterface):
         :param state: L'état courant
         :return: L'action 
         """
-        raise NotImplementedError("Q-learning NotImplementedError at Function select_action.")
+        if np.random.rand() < self.epsilon:
+            a = np.random.randint(
+                self.maze.action_space.n)      # random action
+        else:
+            a = self.select_greedy_action(state)
+        return a
 
 
     def select_greedy_action(self, state):
