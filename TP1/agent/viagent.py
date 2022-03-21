@@ -65,7 +65,7 @@ class VIAgent(AgentInterface):
         Cette méthode retourne vraie si la condition d'arrêt de 
         l'algorithme est vérifiée. Sinon elle retourne faux.
         """
-        raise NotImplementedError("VI NotImplementedError at function done.")
+        return (abs(V - V_copy).max() < error)
 
     def bellman_operator(self, s: 'Pair[int, int]') -> float:
         """À COMPLÉTER!
@@ -84,7 +84,7 @@ class VIAgent(AgentInterface):
             for next_y in range(self.maze.ny):
                 for next_x in range(self.maze.nx):
                     # Compléter ici votre équation de Bellman
-                    raise NotImplementedError("Value Iteration NotImplementedError at Function bellman_operator.")
+                    q_s_a += self.maze.T((s[0], s[1]), a, (next_y, next_x)) * (self.maze.R(s, a) + self.gamma * self.V[next_y, next_x])
             if (q_s_a > max_value):
                 max_value = q_s_a
         return max_value
@@ -107,7 +107,7 @@ class VIAgent(AgentInterface):
             for next_y in range(self.maze.ny):
                 for next_x in range(self.maze.nx):
                     # Compléter ici votre équation de Bellman
-                    raise NotImplementedError("Value Iteration NotImplementedError at Function select_action")
+                    q_s_a += self.maze.T((s[0], s[1]), a, (next_y, next_x)) * (self.maze.R(s, a) + self.gamma * self.V[next_y, next_x])
             if (q_s_a > max_value):
                 max_value = q_s_a
                 amax = a
